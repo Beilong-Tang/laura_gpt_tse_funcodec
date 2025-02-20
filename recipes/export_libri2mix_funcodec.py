@@ -127,6 +127,9 @@ def run(rank, args):
 
             codes_len = codes.size(0)
             shape_file.write(f"{n} {codes_len}\n")
+        shape_file.close()
+        shape_file.close()
+        torch.cuda.empty_cache()
 
 def _get(files)-> List[str]:
     res = []
