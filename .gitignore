@@ -1,0 +1,16 @@
+*.out
+*.txt
+*.err
+__pycache__/
+test*
+*.pt
+ckpt/*
+*.pt
+data/*
+*.log
+output/*
+!ckpt/.gitkeep
+
+
+## pyrightconfig.json
+pyrightconfig.json
