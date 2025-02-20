@@ -77,6 +77,7 @@ def run(rank, args):
     device = args.gpus[rank % len(args.gpus)]
     names = names[rank::args.num_proc]
     paths = paths[rank::args.num_proc]
+    torch.cuda.set_device(torch.device(device))
 
     # Output path # ex. out/{rank}
     out_path = Path(args.output)
@@ -89,7 +90,7 @@ def run(rank, args):
     
 
     # Initialize Model #
-    model = Speech2Token(config_file =args.config, model_file = args.model, device=device)
+    model = Speech2Token(config_file =args.config, model_file = args.model, device='cuda')
     model.eval()
     print("[=== Start outputing to codec ===]")
     with torch.no_grad():
@@ -105,7 +106,7 @@ def run(rank, args):
             assert _sr == 16000
             # audio = rms_normalize(audio) # Remove RMS normalization
             audio = torch.from_numpy(audio)
-            audio = audio.to(device)
+            audio = audio.to('cuda')
             audio = audio.unsqueeze(0).unsqueeze(0) # [1,1,T]
 
             # modeling
