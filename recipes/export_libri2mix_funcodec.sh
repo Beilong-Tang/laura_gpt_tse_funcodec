@@ -67,7 +67,7 @@ for ((i=0; i<${#scp_list[@]}; i++)); do
     type=${type[$i]}
     echo "Processing $type"
     scp_file=${scp_list[$i]}
-    python utils/export_libri2mix_funcodec.py --scp_file $scp_file \
+    python export_libri2mix_funcodec.py --scp_file $scp_file \
       --config $config --model $model --output $out_dir/$type \
       --num_proc $num_proc --gpus $gpus
     
@@ -96,7 +96,7 @@ for ((i=0; i<${#scp_list[@]}; i++)); do
     type=${type[$i]}
     echo "Processing $type"
     scp_file=${scp_list[$i]}
-    python utils/export_libri2mix_funcodec.py --scp_file $scp_file \
+    python export_libri2mix_funcodec.py --scp_file $scp_file \
       --config $config --model $model --output $out_dir/$type \
       --num_proc $num_proc --gpus $gpus
     
