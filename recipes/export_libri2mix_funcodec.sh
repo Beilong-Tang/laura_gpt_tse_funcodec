@@ -37,7 +37,7 @@ set -o pipefail
 #######
 # DDP #
 #######
-num_proc=16
+num_proc=8
 gpus="cuda:0 cuda:1 cuda:2 cuda:3"
 
 #########
