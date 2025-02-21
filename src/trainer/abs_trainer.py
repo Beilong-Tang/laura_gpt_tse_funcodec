@@ -93,11 +93,6 @@ class Trainer:
         # self.max_len_filter = MaxLength(['text', 'codec'], 
         #                                 int(config.audio_max_duration * 16000))
 
-        ## Funcodec Model to extract features
-        self.funcodec = Speech2Token(config_file = config.codec['codec'], model_file = config.codec['model'], device='cuda')
-        self.funcodec.eval()
-        self.funcodec.cuda()
-
         if resume != "":
             ## loading ckpt
             self._log(f"loading model from {resume}...")
