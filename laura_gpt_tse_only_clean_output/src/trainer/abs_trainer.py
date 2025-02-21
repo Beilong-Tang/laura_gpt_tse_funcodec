@@ -117,6 +117,7 @@ class Trainer:
         ## Limit Aux length
         _res = []
         _res_len = []
+
         for i, _t_aux in enumerate(_data['raw_aux']):
             # [T]
             _t_aux = _t_aux[:_data['raw_aux_lengths'][i].item()]
@@ -151,7 +152,8 @@ class Trainer:
         for key, value in _data_res.items():
             data_shape.append(f"{key}:{value.shape}")
             _data_res[key] = value.cuda()
-        hint_once(f"batch data shape {','.join(data_shape)} on rank {torch.distributed.get_rank()}", "data_after_shape")
+        hint_once(f"batch data shape {','.join(data_shape)} | text lengths {_data_res['text_lengths']}, aux lengths {_data_res['aux_lengths']} on rank {torch.distributed.get_rank()}", "data_after_shape")
+        
         
         ## Process Mel Spectrogram ##
         loss, stats, weight = self.model(**_data_res)
