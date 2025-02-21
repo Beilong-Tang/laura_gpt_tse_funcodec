@@ -111,18 +111,15 @@ class Trainer:
             self.optim.load_state_dict(ckpt["optim"])
             self.scheduler = ckpt["scheduler"]
             self.new_bob = ckpt["new_bob"]
+        
+    
+    def _post_process(self, _data):
+        """
+        """
+        _data_res = {} # Return value
 
-    def _train_one_batch(self, batch, data, optim, if_log) -> dict:
-        uttid, _data = data
-
-        ## Preprocess:
-        ## 0. For now, dont apply max for now and see if it works
-
-        _data_res = {}
-        ## 1. Cat _data text and text_aux
         _res = []
         _res_len = []
-
         for i, (_t, _t_aux) in enumerate(zip(_data['raw'], _data['raw_aux'])):
             # [T]
             _t = _t[:_data['raw_lengths'][i].item()]
@@ -132,7 +129,6 @@ class Trainer:
         _data_res["text"] = pad_list(_res, 0.0)
         _data_res['text_lengths'] = torch.tensor(_res_len, dtype = torch.long)
 
-        ## 2. Cat codec and codec_aux 
         _res = []
         _res_len = []
         for i, (_t, _t_aux) in enumerate(zip(_data['codec'], _data['codec_aux'])):
@@ -144,10 +140,20 @@ class Trainer:
         _data_res["codec"] = pad_list(_res, 0.0)
         _data_res['codec_lengths'] = torch.tensor(_res_len, dtype = torch.long)
 
+        return _data_res
+
+    def _train_one_batch(self, batch, data, optim, if_log) -> dict:
+        uttid, _data = data
+
+        ## Preprocess:
+        ## 0. For now, dont apply max for now and see if it works
+
+        _data_res = self._post_process(_data)
+
         ## Apply the model to wrap the 
         ## 3. Apply Mel to data text
-        _data["text"], _data["text_lengths"] = self.mel_process.mel(
-            _data["text"], _data["text_lengths"]
+        _data_res["text"], _data_res["text_lengths"] = self.mel_process.mel(
+            _data_res["text"], _data_res["text_lengths"]
         )
             
         data_shape = []
@@ -173,13 +179,14 @@ class Trainer:
     def _eval_one_batch(self, data) -> dict:
         uttid, _data = data
 
+        _data_res = self._post_process(_data)
         # Mel Spectrogram Processing
-        _data["text"], _data["text_lengths"] = self.mel_process.mel(
-            _data["text"], _data["text_lengths"]
+        _data_res["text"], _data_res["text_lengths"] = self.mel_process.mel(
+            _data_res["text"], _data_res["text_lengths"]
         )
-        for key, value in _data.items():
-            _data[key] = value.cuda()
-        loss, stats, weight = self.model(**_data)
+        for key, value in _data_res.items():
+            _data_res[key] = value.cuda()
+        loss, stats, weight = self.model(**_data_res)
         loss = apply_weight_average(loss, stats, weight)
         return stats
 
