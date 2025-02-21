@@ -88,10 +88,8 @@ class Trainer:
         else:
             self.mel_process = MelSpec()
 
-        
-        ## Max Length Constraint
-        # self.max_len_filter = MaxLength(['text', 'codec'], 
-        #                                 int(config.audio_max_duration * 16000))
+        self.max_aux_ds = config.max_aux_ds # Maximum auxiliary audio length in seconds
+
 
         if resume != "":
             ## loading ckpt
@@ -113,23 +111,31 @@ class Trainer:
         """
         _data_res = {} # Return value
 
+        ## Raw audio length
         _res = []
         _res_len = []
         for i, (_t, _t_aux) in enumerate(zip(_data['raw'], _data['raw_aux'])):
             # [T]
             _t = _t[:_data['raw_lengths'][i].item()]
             _t_aux = _t_aux[:_data['raw_aux_lengths'][i].item()]
+            if self.max_aux_ds is not None:
+                _t_aux = _t_aux[-int(self.max_aux_ds * 16000):]
+                pass
             _res.append(torch.cat([_t_aux, _t]))
             _res_len.append(len(_t) + len(_t_aux))
         _data_res["text"] = pad_list(_res, 0.0)
         _data_res['text_lengths'] = torch.tensor(_res_len, dtype = torch.long)
 
+        ## Codec length
         _res = []
         _res_len = []
         for i, (_t, _t_aux) in enumerate(zip(_data['codec'], _data['codec_aux'])):
             # [T]
             _t = _t[:_data['codec_lengths'][i].item()]
             _t_aux = _t_aux[:_data['codec_aux_lengths'][i].item()]
+            if self.max_aux_ds is not None:
+                _t_aux = _t_aux[-int(self.max_aux_ds * self.config.codec_token_rate):]
+                pass
             _res.append(torch.cat([_t_aux, _t]))
             _res_len.append(len(_t) + len(_t_aux))
         _data_res["codec"] = pad_list(_res, 0.0)
