@@ -74,7 +74,7 @@ model_ckpt="$(dirname "$config_path")/$(basename "$config_path" .yaml)/ckpt/best
 
 if [ ${stage} -le 0 ] && [ ${stop_stage} -ge 0 ]; then
 echo "[Inference]"
-python infer.py --mix_wav_scp $mix_wav_scp --ref_wav_scp $ref_wav_scp \
+python src/infer.py --mix_wav_scp $mix_wav_scp --ref_wav_scp $ref_wav_scp \
  --ref_codec_scp $ref_codec_scp \
  --config $config_path --model_ckpt $model_ckpt --output_dir "$output_dir/wavs" --num_proc $num_proc --gpus $gpus
 fi
@@ -89,12 +89,12 @@ if [ ${stage} -le 1 ] && [ ${stop_stage} -ge 1 ]; then
   ## WER 
   echo "[WER $wer_model]"
   ## TODO: Change WER TO Large After downloading
-  python eval/wer.py -t "$output_dir"/wavs -r $wer_reference \
+  python src/eval/wer.py -t "$output_dir"/wavs -r $wer_reference \
     -o "$output_dir"/transcript_"$wer_model".txt -m $wer_model --num_proc $wer_num_proc
 
   # SPK SIM
   echo "[SPKSIM WeSpeaker]"
-  python eval/wespeaker_eval.py -t "$output_dir/wavs" \
+  python src/eval/wespeaker_eval.py -t "$output_dir/wavs" \
     -r $libri2mix_clean_dir -o "$output_dir/wespeaker.csv" 
 fi 
 
@@ -103,5 +103,5 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   echo "[Evaluation]"
   # DNSMOS
   echo "[DNSMOS 16k]"
-  python eval/dnsmos.py --model_dir $dns_model_dir -t "$output_dir/wavs" -o "$output_dir/dnsmos.csv"
+  python src/eval/dnsmos.py --model_dir $dns_model_dir -t "$output_dir/wavs" -o "$output_dir/dnsmos.csv"
 fi
