@@ -13,7 +13,7 @@ from utils.utils import Logger
 
 from .helper import dict_to_str, save
 from utils.hinter import hint_once 
-from utils.postprocess import MaxLength, CleanNoisyFilter
+from utils.postprocess import MaxLength
 from funcodec.bin.codec_inference import Speech2Token
 from funcodec.modules.nets_utils import pad_list
 
@@ -90,11 +90,8 @@ class Trainer:
 
         
         ## Max Length Constraint
-        self.max_len_filter = MaxLength(['text', 'codec'], 
-                                        int(config.audio_max_duration * 16000))
-
-        ## Clean Noisy Filter
-        self.clean_noisy_filter = CleanNoisyFilter()
+        # self.max_len_filter = MaxLength(['text', 'codec'], 
+        #                                 int(config.audio_max_duration * 16000))
 
         ## Funcodec Model to extract features
         self.funcodec = Speech2Token(config_file = config.codec['codec'], model_file = config.codec['model'], device='cuda')
@@ -118,44 +115,38 @@ class Trainer:
     def _train_one_batch(self, batch, data, optim, if_log) -> dict:
         uttid, _data = data
 
-        # # Mel Spectrogram Processing
-        # _data["text"], _data["text_lengths"] = self.mel_process.mel(
-        #     _data["text"], _data["text_lengths"]
-        # )
         ## Preprocess:
-        ## Note that the text is composed of [clean,noisy], and clean noisy should have the same length
-        ## 1. Extract Clean Speech and Noisy Speech 
-        _data['text'], _data['text_lengths'], _data['codec'], _data['codec_lengths'] = self.clean_noisy_filter(_data['text'], _data['text_lengths'])
-        ## 2. Limit the maximum length
-        _data = self.max_len_filter(_data)
+        ## 0. For now, dont apply max for now and see if it works
+
+        ## 1. Cat _data text and text_aux
+        _res = []
+        _res_len = []
+        for i, (_t, _t_aux) in enumerate(zip(_data['raw'], _data['raw_aux'])):
+            # [T]
+            _t = _t[:_data['raw_lengths'][i].item()]
+            _t_aux = _t_aux[:_data['raw_aux_lengths'][i].item()]
+            _res.append(torch.cat([_t, _t_aux]))
+            _res_len.append(len(_t) + len(_t_aux))
+        _data["text"] = pad_list(_res, 0.0)
+        _data['text_lengths'] = torch.tensor(_res_len, dtype = torch.long)
+
+        ## 2. Cat codec and codec_aux 
+        _res = []
+        _res_len = []
+        for i, (_t, _t_aux) in enumerate(zip(_data['codec'], _data['codec_aux'])):
+            # [T]
+            _t = _t[:_data['codec_lengths'][i].item()]
+            _t_aux = _t_aux[:_data['codec_aux_lengths'][i].item()]
+            _res.append(torch.cat([_t, _t_aux]))
+            _res_len.append(len(_t) + len(_t_aux))
+        _data["codec"] = pad_list(_res, 0.0)
+        _data['codec_lengths'] = torch.tensor(_res_len, dtype = torch.long)
+
+        ## Apply the model to wrap the 
         ## 3. Apply Mel to data text
         _data["text"], _data["text_lengths"] = self.mel_process.mel(
             _data["text"], _data["text_lengths"]
         )
-        ## Simply outputing the shape
-        data_shape = []
-        for key, value in _data.items():
-            data_shape.append(f"{key}:{value.shape}")
-        hint_once(f"before funcodec batch data shape {','.join(data_shape)} on rank {torch.distributed.get_rank()}", "data_before_shape")
-        ## 4. Apply Funcodec Extraction on _data['codec']
-
-        for key,value in _data.items():
-            _data[key] = value[:3]
-
-        res = []
-        res_len = []
-        with torch.no_grad():
-            for i, audio in enumerate(_data['codec']): # T
-                audio = audio[:_data['codec_lengths'][i].item()]
-                audio = audio.unsqueeze(0).unsqueeze(0).cuda() # [1,1,T]
-                codec = self.funcodec(audio, run_mod = "encode")[0][0].permute(1,2,0).squeeze(0).cpu() # [T, N]
-                res.append(codec)
-                res_len.append(len(codec))
-        res = pad_list(res, 0).to(torch.long) ## Make it to be a long value
-        res_len = torch.tensor(res_len, dtype=torch.long)
-        _data['codec'] = res 
-        _data['codec_lengths'] = res_len
-
             
         data_shape = []
         for key, value in _data.items():

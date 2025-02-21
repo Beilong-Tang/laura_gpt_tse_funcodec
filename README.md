@@ -13,5 +13,9 @@ It fixes the bug that laura_gpt does not scale the audio
 
 ## TODO 
 
-- [x] Add `codec` config in the config file.
+- [] `train_data_path_and_name_and_type` and `valid_data_path_and_name_and_type` in config needs to add another aux field
+    - [] add `raw_aux` as the original aux raw audio to the config
+    - [] add `codec_aux` as the aux codec to the config
+    - [] add `raw` as the original raw audio to the config (subsitute text)
+
 
