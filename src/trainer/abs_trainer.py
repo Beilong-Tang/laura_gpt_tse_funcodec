@@ -127,7 +127,7 @@ class Trainer:
             # [T]
             _t = _t[:_data['raw_lengths'][i].item()]
             _t_aux = _t_aux[:_data['raw_aux_lengths'][i].item()]
-            _res.append(torch.cat([_t, _t_aux]))
+            _res.append(torch.cat([_t_aux, _t]))
             _res_len.append(len(_t) + len(_t_aux))
         _data_res["text"] = pad_list(_res, 0.0)
         _data_res['text_lengths'] = torch.tensor(_res_len, dtype = torch.long)
@@ -139,7 +139,7 @@ class Trainer:
             # [T]
             _t = _t[:_data['codec_lengths'][i].item()]
             _t_aux = _t_aux[:_data['codec_aux_lengths'][i].item()]
-            _res.append(torch.cat([_t, _t_aux]))
+            _res.append(torch.cat([_t_aux, _t]))
             _res_len.append(len(_t) + len(_t_aux))
         _data_res["codec"] = pad_list(_res, 0.0)
         _data_res['codec_lengths'] = torch.tensor(_res_len, dtype = torch.long)
