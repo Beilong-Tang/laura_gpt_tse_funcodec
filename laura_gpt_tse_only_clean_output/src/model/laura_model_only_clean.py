@@ -375,7 +375,7 @@ class LauraGenModelOnlyClean(AbsESPnetModel):
             codec_lengths: (B,) ## Clean length
         """
         text = text[:, :text_lengths.max()]
-        aux = aux[: :aux_lengths.max()]
+        aux = aux[:, :aux_lengths.max()]
         codec = codec[:, :codec_lengths.max()].long()
 
         ## I believe the if block code will not execute
