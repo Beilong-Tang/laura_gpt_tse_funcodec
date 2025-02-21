@@ -13,7 +13,7 @@ from pathlib import Path
 import torchaudio
 import soundfile as sf
 from utils.utils import AttrDict, update_args, setup_seed
-from bin.se_inference import SpeechEnhancement
+from bin.tse_inference import TSExtraction
 from utils.utils import get_source_list
 from utils.mel_spectrogram import MelSpec
 
@@ -24,14 +24,10 @@ def parse_args():
     parser.add_argument("--sampling", default=25, type=int)
     parser.add_argument("--beam_size", default=1, type=int)
 
-    parser.add_argument("--scp", type=str, default = None)
-    parser.add_argument(
-        "--raw_audio",
-        nargs="+",
-        default=[],
-        help="""the path of the list of audios to infer. If specificed, use this instead of scp argument 
-        e.g. path/to/a.wav path/to/b.wav ...""",
-    )
+    parser.add_argument("--mix_wav_scp", type=str, default = None)
+    parser.add_argument("--ref_wav_scp", type=str, default = None)
+    parser.add_argument("--ref_codec_scp", type=str, default = None)
+
     parser.add_argument("--config", type=str)
     parser.add_argument("--model_ckpt", type=str)
     parser.add_argument("--output_dir", type=str)
@@ -61,40 +57,65 @@ def inference(rank, args):
     # device setup
     device = args.gpus[rank % len(args.gpus)]
     # data for each process setup
-    if args.scp is not None:
-        scp = get_source_list(args.scp)
-    elif len(args.raw_audio) != 0:
-        scp = args.raw_audio
-    else:
-        raise Exception("Either 'scp' or 'raw_audio' arg must be specificed.")
-    scp = scp[rank::args.num_proc]
+
+    mix_wav_ids, mix_wav_paths = get_source_list(args.mix_wav_scp, ret_name=True)
+    ref_wav_ids, ref_wav_paths = get_source_list(args.ref_wav_scp, ret_name=True)
+    ref_codec_ids, ref_codec_paths = get_source_list(args.ref_codec_scp, ret_name=True)
+    
+
+    scp_list = [] # [ [mix_wav, ref_wav, ref_codec], [...] ]
+    for id in mix_wav_ids:
+        mix_wav_path = mix_wav_paths[mix_wav_ids.index(id)]
+        ref_wav_path = ref_wav_paths[ref_wav_ids.index(id)]
+        ref_codec_path = ref_codec_paths[ref_codec_ids.index(id)]
+        scp_list.append([mix_wav_path, ref_wav_path, ref_codec_path])
+
+    scp = scp_list[rank::args.num_proc]
     # logger
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
     # load model
-    sp_en = SpeechEnhancement(args, args.model_ckpt, device, logger)
+    tse = TSExtraction(args, args.model_ckpt, device, logger)
     # mel spec
-    mel_spec = MelSpec()
+    mel_spec = MelSpec(**args.mel_config)
 
     # Inference
     total_rtf = 0.0
-    with torch.no_grad(), tqdm.tqdm(scp, desc="[inferencing...]") as pbar:
-        for audio_path in pbar:
-            # 0. Load audio & Extract Mel
-            audio, sr = torchaudio.load(audio_path)  # [1,T]
+    with torch.no_grad(), tqdm.tqdm(scp, desc=f"[inferencing...rank {rank}]") as pbar:
+        for paths in pbar:
+            mix_wav_path, ref_wav_path, ref_codec_path = paths
+
+            # 0. Mix Mel -> [1, T,]
+            audio, sr = torchaudio.load(mix_wav_path)  # [1,T]
             mask = torch.tensor([audio.size(1)], dtype=torch.long)
-            mel, _ = mel_spec.mel(audio, mask)
-            mel = mel.to(device)
+            mix_mel, _ = mel_spec.mel(audio, mask)
+            mix_mel = mix_mel.to(device)
+
+            # 1. Ref Mel -> [1,T,D]
+            audio, sr = torchaudio.load(ref_wav_path)  # [1,T]
+            mask = torch.tensor([audio.size(1)], dtype=torch.long)
+            ref_mel, _ = mel_spec.mel(audio, mask)
+            ref_mel = ref_mel.to(device)
+            ## Limit the reference mel length
+            if args.max_aux_ds is not None:
+                ref_mel = ref_mel[:, -int(args.max_aux_ds * 16000):]
+
+            # 2. Ref Codec ->
+            ref_codec = np.load(ref_codec_path) # [T,N]
+            ref_codec = torch.from_numpy(ref_codec).to(torch.long)# [T,N]
+            ## Limit the reference mel length
+            if args.max_aux_ds is not None:
+                ref_codec = ref_codec[-int(args.max_aux_ds * args.codec_token_rate):]
 
             # 1. Inference
             start = time.time()
-            output = sp_en(mel)[0]["gen"].squeeze()  # [T]
+            output = tse(mix_mel, ref_mel, ref_codec)[0]["gen"].squeeze()  # [T]
             rtf = (time.time() - start) / (len(output) / sr)
             pbar.set_postfix({"RTF": rtf})
             total_rtf += rtf
 
             # 2. Save audio
-            base_name = Path(audio_path).stem + ".wav"
+            base_name = Path(mix_wav_path).stem + ".wav"
             save_path = args.output_dir / base_name
 
             sf.write(

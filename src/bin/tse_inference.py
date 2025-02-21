@@ -7,7 +7,7 @@ from funcodec.utils.misc import statistic_model_parameters
 from funcodec.bin.codec_inference import Speech2Token
 
 
-class SpeechEnhancement:
+class TSExtraction:
     def __init__(self, args: Namespace, model_ckpt: str, device, logger):
         # Load Laura GPT Model #
         model: nn.Module = Text2AudioGenTask.build_model(args)
@@ -49,12 +49,18 @@ class SpeechEnhancement:
         self.beam_size = args.beam_size
 
     @torch.no_grad()
-    def __call__(self, text: torch.Tensor):
+    def __call__(self, mix_mel:torch.Tensor, ref_mel:torch.Tensor, ref_codec:torch.Tensor):
         """
-        text(mel spec): [1, T, D]
+        This function can also be used as TSE Inference.
+        mix_mel the mep spec of the mixture: [1, T, D]
+        ref_mel is the reference mel : [1, T, D]
+        ref_codec is the [T, N_Q], the n_q can be actually larger than the predict_nq
         """
-        continual = None  # Continual is not needed here
-        continual_length = 0  # Continual is not needed here
+        text = torch.cat([ref_mel, mix_mel], dim = 1) # [1,T',D]
+        ref_codec = ref_codec[:, :self.model.predict_nq] # [T, 2]
+        ref_codec = ref_codec.tolist()
+        continual = ref_codec
+        continual_length = len(continual)
 
         # 1. Encode Text(Mel)
         text_lens = torch.tensor([text.size(1)], dtype=torch.long, device=text.device)
@@ -68,9 +74,9 @@ class SpeechEnhancement:
             beam_size=self.beam_size,
             continual=continual,
         )
-        _, _, gen_speech_only_lm, _ = self.codec_model(
-            decoded_codec[:, continual_length:], bit_width=None, run_mod="decode"
-        )
+        # _, _, gen_speech_only_lm, _ = self.codec_model(
+        #     decoded_codec[:, continual_length:], bit_width=None, run_mod="decode"
+        # )
         # 3. predict embeddings
         gen_speech = self.model.syn_audio(
             decoded_codec,
@@ -81,10 +87,11 @@ class SpeechEnhancement:
         )
         ret_val = dict(
             gen=gen_speech,
-            gen_only_lm=gen_speech_only_lm,
+            # gen_only_lm=gen_speech_only_lm,
         )
 
         return (
             ret_val,
             decoded_codec,
-        )  # {'gen':[1,1,T], 'gen_only_lm':[1,1,T]}, [1,T,n_q]
+        )  # {'gen':[1,1,T] }, [1,T,n_q]
+

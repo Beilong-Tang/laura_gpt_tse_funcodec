@@ -196,19 +196,6 @@ class Trainer:
             self.logger.info(msg)
         pass
 
-    # def _apply_scheduler(self, result):
-    #     if self.new_bob is not None:
-    #         if self.scheduler is not None:
-    #             print(
-    #                 "WARNING!, ONLY APPLY NEW BOB instead of the scheduler provided since you provided both "
-    #             )
-    #         _, lr = self.new_bob(result)
-    #         ## adjust the learning rate
-    #         for p in self.optim.param_groups:
-    #             p["lr"] = lr
-    #     elif self.scheduler is not None:
-    #         self.scheduler.step()
-
     def _save(self, model, cv_log, epoch, optim, path, step, save_best: bool):
         if self.rank == 0:
             self._log(f"saving model... for epoch {epoch}")
