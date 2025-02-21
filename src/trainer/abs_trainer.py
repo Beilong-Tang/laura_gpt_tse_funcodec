@@ -118,17 +118,19 @@ class Trainer:
         ## Preprocess:
         ## 0. For now, dont apply max for now and see if it works
 
+        _data_res = {}
         ## 1. Cat _data text and text_aux
         _res = []
         _res_len = []
+
         for i, (_t, _t_aux) in enumerate(zip(_data['raw'], _data['raw_aux'])):
             # [T]
             _t = _t[:_data['raw_lengths'][i].item()]
             _t_aux = _t_aux[:_data['raw_aux_lengths'][i].item()]
             _res.append(torch.cat([_t, _t_aux]))
             _res_len.append(len(_t) + len(_t_aux))
-        _data["text"] = pad_list(_res, 0.0)
-        _data['text_lengths'] = torch.tensor(_res_len, dtype = torch.long)
+        _data_res["text"] = pad_list(_res, 0.0)
+        _data_res['text_lengths'] = torch.tensor(_res_len, dtype = torch.long)
 
         ## 2. Cat codec and codec_aux 
         _res = []
@@ -139,8 +141,8 @@ class Trainer:
             _t_aux = _t_aux[:_data['codec_aux_lengths'][i].item()]
             _res.append(torch.cat([_t, _t_aux]))
             _res_len.append(len(_t) + len(_t_aux))
-        _data["codec"] = pad_list(_res, 0.0)
-        _data['codec_lengths'] = torch.tensor(_res_len, dtype = torch.long)
+        _data_res["codec"] = pad_list(_res, 0.0)
+        _data_res['codec_lengths'] = torch.tensor(_res_len, dtype = torch.long)
 
         ## Apply the model to wrap the 
         ## 3. Apply Mel to data text
@@ -149,13 +151,13 @@ class Trainer:
         )
             
         data_shape = []
-        for key, value in _data.items():
+        for key, value in _data_res.items():
             data_shape.append(f"{key}:{value.shape}")
-            _data[key] = value.cuda()
+            _data_res[key] = value.cuda()
         hint_once(f"batch data shape {','.join(data_shape)} on rank {torch.distributed.get_rank()}", "data_after_shape")
         
         ## Process Mel Spectrogram ##
-        loss, stats, weight = self.model(**_data)
+        loss, stats, weight = self.model(**_data_res)
         loss = apply_weight_average(loss, stats, weight)
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.grad_clip)
