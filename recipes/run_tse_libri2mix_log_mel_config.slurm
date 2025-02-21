@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH -J run_laura_se_urgent2025_log_mel_dm
+#SBATCH -J run_tse_libri2mix_log_mel_config
 #SBATCH -N 4
-#SBATCH -o log_urgent2025_log_mel_dm.out
-#SBATCH -e log_urgent2025_log_mel_dm.err
+#SBATCH -o log/run_tse_libri2mix_log_mel_config.out
+#SBATCH -e log/run_tse_libri2mix_log_mel_config.err
 #SBATCH -p kshdnormal02
 #SBATCH --cpus-per-task=8
 #SBATCH --ntasks-per-node=4
@@ -27,7 +27,7 @@ module load compiler/dtk/24.04
 # Setting #
 ###########
 
-name="urgent2025"
+name="libri2mix"
 config_path=exp/$name/config_log_mel.yaml
 resume=""
 
