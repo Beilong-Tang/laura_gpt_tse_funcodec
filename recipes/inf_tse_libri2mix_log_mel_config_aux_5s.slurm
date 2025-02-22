@@ -48,7 +48,7 @@ ref_codec_scp="/public/home/qinxy/bltang/data/LibriMix/Libri2Mix/wav16k/min/libr
 libri2mix_clean_dir="/public/home/qinxy/bltang/data/LibriMix/Libri2Mix/Libri2Mix/wav16k/min/test/s1" # for wespeaker only
 
 # DDP #
-num_proc=4
+num_proc=8
 gpus="cuda:0 cuda:1 cuda:2 cuda:3"
 
 ########

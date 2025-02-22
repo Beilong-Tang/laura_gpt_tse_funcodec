@@ -98,12 +98,12 @@ def inference(rank, args):
 
             # 1. Ref Mel -> [1,T,D]
             audio, sr = torchaudio.load(ref_wav_path)  # [1,T]
+            if args.max_aux_ds is not None:
+                audio = audio[:, -int(args.max_aux_ds * 16000):]
             mask = torch.tensor([audio.size(1)], dtype=torch.long)
             ref_mel, _ = mel_spec.mel(audio, mask)
             ref_mel = ref_mel.to(device)
             ## Limit the reference mel length
-            if args.max_aux_ds is not None:
-                ref_mel = ref_mel[:, -int(args.max_aux_ds * 16000):]
 
             # 2. Ref Codec ->
             ref_codec = np.load(ref_codec_path) # [T,N]
