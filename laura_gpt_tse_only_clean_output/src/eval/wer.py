@@ -14,7 +14,7 @@ import torch.multiprocessing as mp
 import torch
 from pathlib import Path
 
-sys.path.append(os.getcwd())
+sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
 import multiprocessing as mp
 
