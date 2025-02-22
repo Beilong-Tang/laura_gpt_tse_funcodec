@@ -14,7 +14,7 @@ import torch.multiprocessing as mp
 import torch
 from pathlib import Path
 
-sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
+sys.path.append(os.getcwd())
 
 import multiprocessing as mp
 
@@ -33,7 +33,7 @@ def parse_args():
         "--reference",
         type=str,
         default=None,
-        help="If None, just run the whisper inference. The path to the output transcript, the content should be name|sentence\n name2|sentence ",
+        help="If None, just run the whisper inference on test_file without evaluating wer. The path to the output transcript, the content should be name|sentence\n name2|sentence ",
     )
     parser.add_argument(
         "-o", "--output", help="The output file containing the transcript"
@@ -97,7 +97,10 @@ def wer(args):
         res_dict = {}
         with open(path, "r") as f:
             for line in f.readlines():
-                name, text = line.replace("\n", "").split(separator)
+                line = line.replace("\n", "")
+                _idx = line.find(separator)
+                name = line[:_idx]
+                text = line[_idx+1:]
                 res_dict[name] = text
         return res_dict
     output_dict = _get_result(args.output)
@@ -118,3 +121,4 @@ def wer(args):
         print(info, file = f)
 if __name__ == "__main__":
     main()
+
