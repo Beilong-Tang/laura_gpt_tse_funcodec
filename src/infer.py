@@ -59,6 +59,8 @@ def inference(rank, args):
     print(f"args: {args}")
     # device setup
     device = args.gpus[rank % len(args.gpus)]
+    torch.cuda.set_device(device)
+    device = 'cuda'
     # data for each process setup
 
     mix_wav_ids, mix_wav_paths = get_source_list(args.mix_wav_scp, ret_name=True)
