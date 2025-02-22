@@ -498,8 +498,8 @@ class LauraGenModelOnlyClean(AbsESPnetModel):
     ) -> torch.Tensor:
         device = text.device
         out_tokens = [] if continual is None else deepcopy(continual)
-        sos_eos_emb = self.lm_embedding(torch.tensor([[self.sos_eos]], dtype=torch.int64, device=device))
-        task_id_emb = self.lm_embedding(torch.tensor([[self.task_id]], dtype=torch.int64, device=device))
+        sos_eos_emb = self.lm_embedding(torch.tensor([[self.sos_eos]], dtype=torch.int64, device=device)) # [1,1,D]
+        task_id_emb = self.lm_embedding(torch.tensor([[self.task_id]], dtype=torch.int64, device=device)) # [1,1,D]
         prompt = torch.cat([sos_eos_emb, text, task_id_emb], dim=1)
         state = None
         for i in range(max_length):
