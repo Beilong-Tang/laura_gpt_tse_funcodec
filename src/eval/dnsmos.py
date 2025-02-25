@@ -8,7 +8,7 @@ import glob
 import os
 from pathlib import Path
 import sys 
-sys.path.append(os.getcwd())
+sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
 import librosa
 import numpy as np
