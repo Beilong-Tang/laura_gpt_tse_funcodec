@@ -24,7 +24,7 @@ def main(args):
             print(f"WESPEAKER {key} nof found")
             continue
         output = audio_path_dict.get(key)
-        ref = audio_path_dict.get(key)
+        ref = ref_path_dict.get(key)
         sim = model.compute_similarity(output, ref)
         res.append({"sim": sim})
         total += sim
