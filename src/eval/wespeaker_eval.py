@@ -12,14 +12,19 @@ from pathlib import Path
 def main(args):
     model = wespeaker.load_model(args.language)
     model.set_gpu(args.device_id)
-    audio_path_list = sorted(glob.glob(op.join(args.test_file, "*.wav")))
-    ref_path_list = sorted(glob.glob(op.join(args.reference_file, "*.wav")))
-    print("total audio len: ", len(audio_path_list))
+    audio_path_dict = dict([ (Path(p).stem, p) for p in sorted(glob.glob(op.join(args.test_file, "*.wav")))])
+    ref_path_dict = dict([ (Path(p).stem, p) for p in sorted(glob.glob(op.join(args.reference_file, "*.wav")))])
+    print("total audio len: ", len(ref_path_dict))
     os.makedirs(op.dirname(args.output), exist_ok=True)
     res = []
     total = 0
-    pbar = tqdm.tqdm(list(zip(audio_path_list, ref_path_list)))
-    for idx, (output, ref) in enumerate(pbar):
+    pbar = tqdm.tqdm(audio_path_dict)
+    for idx, key in enumerate(pbar):
+        if ref_path_dict.get(key) is None:
+            print(f"WESPEAKER {key} nof found")
+            continue
+        output = audio_path_dict.get(key)
+        ref = audio_path_dict.get(key)
         sim = model.compute_similarity(output, ref)
         res.append({"sim": sim})
         total += sim

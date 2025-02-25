@@ -111,10 +111,14 @@ def inference(rank, args):
             ## Limit the reference mel length
             if args.max_aux_ds is not None:
                 ref_codec = ref_codec[-int(args.max_aux_ds * args.codec_token_rate):]
-
             # 1. Inference
             start = time.time()
-            output = tse(mix_mel, ref_mel, ref_codec)[0]["gen"].squeeze()  # [T]
+            try:
+                output = tse(mix_mel, ref_mel, ref_codec)[0]["gen"].squeeze()  # [T]
+            except:
+                print(f"ERROR!! {mix_wav_path} is not correctly infered")
+                torch.cuda.empty_cache()
+                continue
             rtf = (time.time() - start) / (len(output) / sr)
             pbar.set_postfix({"RTF": rtf})
             total_rtf += rtf
