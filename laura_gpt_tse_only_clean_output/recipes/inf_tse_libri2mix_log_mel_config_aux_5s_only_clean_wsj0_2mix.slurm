@@ -36,7 +36,7 @@ module load compiler/rocm/dtk-23.10
 ###########
 # Setting #
 ###########
-stage=1
+stage=2
 stop_stage=2 # 0: infer, 1: WER + SPKSIM 2. DNSMOS
 
 # 0. libri2mix mixture without norm
@@ -93,15 +93,16 @@ if [ ${stage} -le 1 ] && [ ${stop_stage} -ge 1 ]; then
   ## TODO: Change WER TO Large After downloading
   python src/eval/wer.py -t "$output_dir"/wavs -r $wer_reference \
     -o "$output_dir"/transcript_"$wer_model".txt -m $wer_model --num_proc $wer_num_proc
+fi 
+
+
+if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
 
   # SPK SIM
   echo "[SPKSIM WeSpeaker]"
   python src/eval/wespeaker_eval.py -t "$output_dir/wavs" \
     -r $wsj0_2mix_clean_dir -o "$output_dir/wespeaker.csv" 
-fi 
 
-
-if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
   echo "[Evaluation]"
   # DNSMOS
   echo "[DNSMOS 16k]"
