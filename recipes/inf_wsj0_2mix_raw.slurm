@@ -36,38 +36,38 @@ module load compiler/rocm/dtk-23.10
 stage=1
 stop_stage=1 # 0: infer, 1: WER + SPKSIM 2. DNSMOS
 
-# 0. libri2mix mixture without norm
-name="libri2mix"
-dataset="libri2mix" # Specify which dataset to infer
-config_name="config_log_mel_aux_5s.yaml"
+# # 0. libri2mix mixture without norm
+# name="libri2mix"
+# dataset="libri2mix" # Specify which dataset to infer
+# config_name="config_log_mel_aux_5s.yaml"
 
-scp="/public/home/qinxy/bltang/data/LibriMix/Libri2Mix/Libri2Mix/wav16k/min/list/test/mix.scp"
-mix_wav_scp="/public/home/qinxy/bltang/data/LibriMix/Libri2Mix/wav16k/min/lists/test/mix.scp"
-ref_wav_scp="/public/home/qinxy/bltang/data/LibriMix/Libri2Mix/wav16k/min/lists/test/aux_s1.scp"
-ref_codec_scp="/public/home/qinxy/bltang/data/LibriMix/Libri2Mix/wav16k/min/libri2mix_tse_data_funcodec/aux_s1/test/all.scp"
+# scp="/public/home/qinxy/bltang/data/LibriMix/Libri2Mix/Libri2Mix/wav16k/min/list/test/mix.scp"
+# mix_wav_scp="/public/home/qinxy/bltang/data/LibriMix/Libri2Mix/wav16k/min/lists/test/mix.scp"
+# ref_wav_scp="/public/home/qinxy/bltang/data/LibriMix/Libri2Mix/wav16k/min/lists/test/aux_s1.scp"
+# ref_codec_scp="/public/home/qinxy/bltang/data/LibriMix/Libri2Mix/wav16k/min/libri2mix_tse_data_funcodec/aux_s1/test/all.scp"
 
 
 wsj0_2mix_clean_dir="/public/home/qinxy/bltang/data/wsj0_target/min/tt/s1" # for wespeaker only
 
-# DDP #
-num_proc=8
-gpus="cuda:0 cuda:1 cuda:2 cuda:3"
+# # DDP #
+# num_proc=8
+# gpus="cuda:0 cuda:1 cuda:2 cuda:3"
 
-########
-# Eval #
-########
-dns_model_dir="/public/home/qinxy/bltang/ml_framework_slurm/recipes/DNSMOS"
-wer_model="base"
-wer_num_proc=8
+# ########
+# # Eval #
+# ########
+# dns_model_dir="/public/home/qinxy/bltang/ml_framework_slurm/recipes/DNSMOS"
+# wer_model="base"
+# wer_num_proc=8
 
-# DONT CHANGE #
-wer_reference="/public/home/qinxy/bltang/data/LibriMix/Libri2Mix/Libri2Mix/wav16k/min/whisper/whisper_$wer_model.txt"
+# # DONT CHANGE #
+# wer_reference="/public/home/qinxy/bltang/data/LibriMix/Libri2Mix/Libri2Mix/wav16k/min/whisper/whisper_$wer_model.txt"
 
 ###############
 # DONT CHANGE #
 ###############
 # config_path=exp/$name/$config_name
-output_dir=/public/home/qinxy/bltang/laura_gpt/laura_gpt_tse_funcodec/output/libri2mix/mix_clean_raw
+output_dir=/public/home/qinxy/bltang/laura_gpt/laura_gpt_tse_funcodec/output/wsj0_2mix_raw
 # model_ckpt=ckpt/$name/$(basename "$config_path" .yaml)/best.pth
 
 #######
@@ -97,7 +97,7 @@ if [ ${stage} -le 1 ] && [ ${stop_stage} -ge 1 ]; then
   # SPK SIM
   echo "[SPKSIM WeSpeaker]"
   python src/eval/wespeaker_eval.py -t "$output_dir/wavs" \
-    -r $libri2mix_clean_dir -o "$output_dir/wespeaker.csv" 
+    -r $wsj0_2mix_clean_dir -o "$output_dir/wespeaker.csv" 
 fi 
 
 
