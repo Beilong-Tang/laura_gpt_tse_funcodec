@@ -39,7 +39,7 @@ def parse_args():
         "-o", "--output", help="The output file containing the transcript"
     )
     parser.add_argument(
-        "-m", "--model", help="The model to use, default: large", default="large"
+        "-m", "--model", help="The model to use, default: base", default="base"
     )
     # DDP #
     parser.add_argument(
