@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH -J wer_wsj0_2mix_raw
+#SBATCH -J whisper_base_wsj0_2mix_clean
 #SBATCH -N 1
-#SBATCH -o log/wer_wsj0_2mix_raw.out
-#SBATCH -e log/wer_wsj0_2mix_raw.err
+#SBATCH -o log/whisper_base_wsj0_2mix_clean.out
+#SBATCH -e log/whisper_base_wsj0_2mix_clean.err
 #SBATCH -p kshdnormal
 #SBATCH --cpus-per-task=8
 #SBATCH --ntasks-per-node=4
