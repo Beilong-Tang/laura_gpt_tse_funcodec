@@ -30,4 +30,4 @@ module load compiler/devtoolset/7.3.1
 module load mpi/hpcx/2.7.4/gcc-7.3.1
 module load compiler/rocm/dtk-23.10
 
-python src/eval/wer.py --test_file /public/home/qinxy/bltang/data/wsj0_target/min/tt/mix --output /public/home/qinxy/bltang/data/wsj0_target/min/tt/generate/whisper/whisper_base.txt -m base
+python src/eval/wer.py --test_file /public/home/qinxy/bltang/data/wsj0_target/min/tt/s1 --output /public/home/qinxy/bltang/data/wsj0_target/min/tt/generate/whisper/whisper_base.txt -m base
