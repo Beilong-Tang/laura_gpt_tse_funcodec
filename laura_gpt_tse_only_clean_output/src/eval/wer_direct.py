@@ -2,6 +2,7 @@ import jiwer
 import tqdm 
 from pathlib import Path
 import argparse
+import pandas as pd
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -39,18 +40,22 @@ def wer(args):
     ref_dict = _get_result(args.reference)
     total_wer = 0.0
     bad_audio=[]
+    res = []
     for key, value in tqdm.tqdm(ref_dict.items()):
         if output_dict.get(key) is None:
             bad_audio.append(key)
         else:
             value_hat = output_dict.get(key)
             wer = jiwer.wer(value, value_hat)
+            res.append({"id": key, "wer": wer})
             total_wer += wer
     avg_wer = total_wer / len(ref_dict)
     info = f"average wer: {avg_wer}, missing audio is {bad_audio}"
     print(info)
     with open(Path(args.output).parent / "wer.txt", "w") as f:
         print(info, file = f)
+    pd.DataFrame(res).to_csv(str(Path(args.output).parent / "wer.csv"), index=False)
+    
 
 
 args = parse_args()
