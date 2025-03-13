@@ -37,7 +37,7 @@ module load compiler/rocm/dtk-23.10
 ###########
 
 name="libri2mix"
-config_path=exp/$name/config_log_mel_aux_5s_predict_nq_1.yaml
+config_path=exp/$name/config_log_mel_aux_5s_predict_nq_3.yaml
 resume=""
 
 ###############
