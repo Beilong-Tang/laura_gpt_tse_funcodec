@@ -10,6 +10,9 @@ data/*
 *.log
 output/*
 !ckpt/.gitkeep
+*.pkl
+*.flac
+*.scp
 
 
 ## pyrightconfig.json
