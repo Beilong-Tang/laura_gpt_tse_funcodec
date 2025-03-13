@@ -36,7 +36,7 @@ module load compiler/rocm/dtk-23.10
 ###########
 # Setting #
 ###########
-stage=2
+stage=0
 stop_stage=2 # 0: infer, 1: WER + SPKSIM 2. DNSMOS
 
 # 0. libri2mix mixture without norm
