@@ -8,7 +8,7 @@ from funcodec.bin.codec_inference import Speech2Token
 
 
 class TSExtraction:
-    def __init__(self, args: Namespace, model_ckpt: str, device, logger):
+    def __init__(self, args: Namespace, model_ckpt: str, device, only_lm:False, logger):
         # Load Laura GPT Model #
         model: nn.Module = Text2AudioGenTask.build_model(args)
         model.to(device)
@@ -47,6 +47,7 @@ class TSExtraction:
         # sampling and beam_size
         self.sampling = args.sampling
         self.beam_size = args.beam_size
+        self.only_lm = only_lm
 
     @torch.no_grad()
     def __call__(self, mix_mel:torch.Tensor, ref_mel:torch.Tensor, ref_codec:torch.Tensor):
@@ -74,24 +75,28 @@ class TSExtraction:
             beam_size=self.beam_size,
             continual=continual,
         )
-        # _, _, gen_speech_only_lm, _ = self.codec_model(
-        #     decoded_codec[:, continual_length:], bit_width=None, run_mod="decode"
-        # )
-        # 3. predict embeddings
-        gen_speech = self.model.syn_audio(
-            decoded_codec,
-            text_outs,
-            text_out_lens,
-            self.codec_model,
-            continual_length=continual_length,
-        )
-        ret_val = dict(
-            gen=gen_speech,
-            # gen_only_lm=gen_speech_only_lm,
-        )
+        if self.only_lm:
+            _, _, gen_speech_only_lm, _ = self.codec_model(
+                decoded_codec[:, continual_length:], bit_width=None, run_mod="decode"
+            )
+            ret_val = dict(gen=gen_speech_only_lm)
+            return (ret_val, decoded_codec)
+        else:
+            # 3. predict embeddings
+            gen_speech = self.model.syn_audio(
+                decoded_codec,
+                text_outs,
+                text_out_lens,
+                self.codec_model,
+                continual_length=continual_length,
+            )
+            ret_val = dict(
+                gen=gen_speech,
+                # gen_only_lm=gen_speech_only_lm,
+            )
 
-        return (
-            ret_val,
-            decoded_codec,
-        )  # {'gen':[1,1,T] }, [1,T,n_q]
+            return (
+                ret_val,
+                decoded_codec,
+            )  # {'gen':[1,1,T] }, [1,T,n_q]
 
