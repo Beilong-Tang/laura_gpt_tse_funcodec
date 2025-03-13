@@ -8,7 +8,7 @@ from funcodec.bin.codec_inference import Speech2Token
 
 
 class TSExtraction:
-    def __init__(self, args: Namespace, model_ckpt: str, device, only_lm:False, logger):
+    def __init__(self, args: Namespace, model_ckpt: str, device, only_lm, logger):
         # Load Laura GPT Model #
         model: nn.Module = Text2AudioGenTask.build_model(args)
         model.to(device)
