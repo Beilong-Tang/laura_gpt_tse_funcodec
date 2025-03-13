@@ -26,7 +26,7 @@ def parse_args():
     ## laura gpt related
     parser.add_argument("--sampling", default=25, type=int)
     parser.add_argument("--beam_size", default=1, type=int)
-    parser.add_argument("--only_lm", type = bool, action = "store_true")
+    parser.add_argument("--only_lm", action = "store_true")
 
     parser.add_argument("--mix_wav_scp", type=str, default = None)
     parser.add_argument("--ref_wav_scp", type=str, default = None)
